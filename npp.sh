@@ -50,14 +50,20 @@ function creation(){
 
 	[[ -d $p ]] && colorful "err: directory with the same name: '$pname' already exists in the target dir\n" R >&2 && exit 1
 
-	$mkdir -p "$p"/{burp_project,target\'s_data,reports,my_evaluation,gathered_info,"$pname"_obsidian_valut}
-  $mkdir -p "$p"/evidences/{general_evidences/{00-a.mashhoor,01-s.rajaei,02-sh.sharifi},payment_evidences,functionalP_evidences}
-	$mkdir "$p"/gathered_info/{crawlers_results,dns_results,fuzzing_results}
-	$mkdir -p "$p"/reports/{templates,all_reports/No.{01..50}/{evidences/{txt,image,video,payloads,exploits,test_files/files_2_upload},edited_media,examples,encrypted,old_versions}}
+	$mkdir -p "$p"/{burp_project,target_data,reports,my_evaluation,gathered_info,"$pname"_obsidian_valut,custom_codes,tmp_exploits}
+  $mkdir -p "$p"/evidences/{0-vuln_evidences,2-payment_evidences,1-functionalP_evidences}
+  $mkdir -p "$p"/gathered_info/access_levels/{admins/{full_admin,other_admin_levels},users/{unauth,authed}}
+  $mkdir -p "$p"/gathered_info/{crawlers_results/katana_r,dns_results,urls,fuzzing_results/ffuf_r}
+  $mkdir -p "$p"/gathered_info/{tech_stack,apex_domains,subdomains,network,custom_wordlists,wayback}
+  $mkdir -p "$p"/reports/{templates,all_reports/No.{01..50}/{evidences/{txt,image,video,payloads,exploits,test_files/files_2_upload},edited_media,examples,encrypted,old_versions}}
 	$mkdir "$p"/"$pname"_obsidian_valut/"$pname"
-	$touch "$p"/target\'s_data/{users,general_description}.txt
+
+  $touch "$p"/gathered_info/{BPG,IP_ranges,CDN,whois,hosts_on_ASN}
+	$touch "$p"/target_data/{users,general_description}.txt
 	$touch "$p"/"$pname"_obsidian_valut/"$pname"/{users,general_description,observations,tmp}.md
-	echo -en "Report author:\nVulnerability founder:\nCVSS:\n" > "$p"/reports/all_reports/No.{01..50}/author.txt
+
+	echo -en "Report author:\nPenTester:\nCVSS_vector:\n" > "$p"/reports/all_reports/No.{01..50}/author.txt
+  echo -en "CVSS_score:\nOWASP_Rating_Vector:\nOWASP_Rating_score:\n" >> "$p"/reports/all_reports/No.{01..50}/author.txt
 
 	if [[ $tr -eq 0 ]]; then
 		colorful "Project directory is created with below tree structure:\n\n" G >&1
@@ -112,6 +118,7 @@ function usage(){
 	colorful "Note: YOU SHOULD NOT add the project name to the absoulte path, 'path' should be the parrent directory" Y >&1
 }
 
+
 function parse_args(){
 	zmodload zsh/zutil
 
@@ -120,6 +127,7 @@ function parse_args(){
 	local -A opts
 	# n --> project name p --> abs_path
 	typeset -g n p t
+
 	zparseopts -D -F -A opts -- \
 		n:=n -name:=n \
 		p:=p -path:=p \
@@ -164,10 +172,12 @@ typeset -Ag colors=(
 	[C]='%F{cyan}'
 	[reset]='%f'
 )
+
 function colorful(){
 	t=$1 # text
 	c=$2 # color
 	print -nP "${colors[$c]}${t}${colors[reset]}"
 }
+
 
 main "${@}"
