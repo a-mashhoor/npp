@@ -16,7 +16,8 @@
 # Also the abalitiy to backup an existing project
 # the ability to move all of existing directories and files of old project to new project and
 # adding a number of new report directories (to expand)
-#
+# Adding a way to set the number of created apex domains or giving a list of scope
+# detect the apex domains based on the scope list and each corealed subdomains
 #
 #
 
@@ -41,6 +42,7 @@ function main(){
 
 function creation(){
 	p=$1
+  report_count=20
 	mkdir=$(which mkdir)
 	touch=$(which touch)
 	tree=$(which tree)
@@ -50,20 +52,21 @@ function creation(){
 
 	[[ -d $p ]] && colorful "err: directory with the same name: '$pname' already exists in the target dir\n" R >&2 && exit 1
 
-	$mkdir -p "$p"/{burp_project,target_data,reports,my_evaluation,gathered_info,"$pname"_obsidian_valut,custom_codes,tmp_exploits}
-  $mkdir -p "$p"/evidences/{0-vuln_evidences,2-payment_evidences,1-functionalP_evidences}
-  $mkdir -p "$p"/gathered_info/access_levels/{admins/{full_admin,other_admin_levels},users/{unauth,authed}}
-  $mkdir -p "$p"/gathered_info/{crawlers_results/katana_r,dns_results,urls,fuzzing_results/ffuf_r}
-  $mkdir -p "$p"/gathered_info/{tech_stack,apex_domains,subdomains,network,custom_wordlists,wayback}
-  $mkdir -p "$p"/reports/{templates,all_reports/No.{01..50}/{evidences/{txt,image,video,payloads,exploits,test_files/files_2_upload},edited_media,examples,encrypted,old_versions}}
-	$mkdir "$p"/"$pname"_obsidian_valut/"$pname"
+	$mkdir -m 700 -p "$p"/{burp_project,target_data,reports,my_evaluation,gathered_info,"$pname"_obsidian_valut,tmp_exploits/{custom_src,payloads,bin,files2u}}
+  $mkdir -m 700 -p "$p"/evidences/{0-vuln_evidences,2-payment_evidences,1-functionalP_evidences}
+  $mkdir -m 700 -p "$p"/gathered_info/access_levels/{admins/{full_admin,other_admin_levels},users/{unauth,authed}}
+  $mkdir -m 700 -p "$p"/gathered_info/{crawlers_results/katana_r,dns_results,fuzzing_results/{ffuf_r,ferox_r}}
+  $mkdir -m 700 -p "$p"/gathered_info/apex_domains/apex-domain-{A..C}.tld/subdomains/sub-{1..3}.apex.tld/{tech_stack,URLs/{waybackURLs,gathered_urls}}
+  $mkdir -m 700 -p "$p"/gathered_info/{network/{scan_r},custom_wordlists}
+  $mkdir -m 700 -p "$p"/reports/{templates,all_reports/No.{01.."$report_count"}/{evidences/{txt,image,video,payloads,exploits,test_files/files2u},edited_media,examples,encrypted,old_versions}}
+	$mkdir -m 700 "$p"/"$pname"_obsidian_valut/"$pname"
 
-  $touch "$p"/gathered_info/{BPG,IP_ranges,CDN,whois,hosts_on_ASN}
+  $touch "$p"/gathered_info/network/{ASNs,CIDRs,CDN,whois,hosts_on_ASN}
 	$touch "$p"/target_data/{users,general_description}.txt
 	$touch "$p"/"$pname"_obsidian_valut/"$pname"/{users,general_description,observations,tmp}.md
 
-	echo -en "Report author:\nPenTester:\nCVSS_vector:\n" > "$p"/reports/all_reports/No.{01..50}/author.txt
-  echo -en "CVSS_score:\nOWASP_Rating_Vector:\nOWASP_Rating_score:\n" >> "$p"/reports/all_reports/No.{01..50}/author.txt
+	echo -en "Report author:\nPenTester:\nCVSS_vector:\n" > "$p"/reports/all_reports/No.{01.."$report_count"}/author.txt
+  echo -en "CVSS_score:\nOWASP_Rating_Vector:\nOWASP_Rating_score:\n" >> "$p"/reports/all_reports/No.{01.."$report_count"}/author.txt
 
 	if [[ $tr -eq 0 ]]; then
 		colorful "Project directory is created with below tree structure:\n\n" G >&1
