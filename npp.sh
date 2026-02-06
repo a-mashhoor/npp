@@ -17,11 +17,6 @@
 # Also the abalitiy to backup an existing project
 # the ability to move all of existing directories and files of old project to new project and
 #
-# adding a number of new report directories (to expand) --> done
-#
-# Adding a way to set the number of created apex domains or giving a list of scope
-# detect the apex domains based on the scope list and each corealed subdomains --> done
-#
 
 
 
