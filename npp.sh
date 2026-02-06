@@ -261,6 +261,16 @@ function create_scope_directories() {
     local project_path="$1"
     local -A apex_map
 
+
+     # Initialize mkdir command
+    local mkdir=$(command -v mkdir 2>/dev/null || echo "")
+    mkdir="${${mkdir## #}%% #}"
+
+    if [[ -z "$mkdir" ]]; then
+        colorful "err: mkdir command not found. This is required.\n" R >&2
+        exit 1
+    fi
+
     # Parse the scope_results into local associative array
     for key value in "${(@)scope_results}"; do
         apex_map[$key]="$value"
@@ -326,7 +336,17 @@ function create_scope_directories() {
 
 
 function add_scope_to_existing() {
+
     local project_path="$1"
+
+    # Initialize mkdir command
+    local mkdir=$(command -v mkdir 2>/dev/null || echo "")
+    mkdir="${${mkdir## #}%% #}"
+
+    if [[ -z "$mkdir" ]]; then
+        colorful "err: mkdir command not found. This is required.\n" R >&2
+        exit 1
+    fi
 
     if [[ ${#scope_inputs[@]} -eq 0 ]]; then
         colorful "No scope provided to add.\n" Y >&1
@@ -363,7 +383,7 @@ function add_scope_to_existing() {
 
         # Process each new apex domain
         for apex_domain subdomains in "${(@kv)new_apex_map}"; do
-            if [[ -n "${existing_apex_map[$apex_domain]}" ]]; then
+            if (( ${+existing_apex_map[$apex_domain]} )); then
                 colorful "  Adding to existing apex domain: $apex_domain\n" C >&1
                 local apex_dir="${existing_apex_map[$apex_domain]}"
                 apex_dir="${apex_dir##*/}"  # Get just the directory name
@@ -397,7 +417,7 @@ function add_scope_to_existing() {
                 fi
 
                 # Create subdomain directory
-                $mkdir -m 700 -p "$project_path/gathered_info/apex_domains/$apex_dir/subdomains/$sub_dir/{tech_stack,URLs/{waybackURLs,gathered_urls}}"
+                $mkdir -m 700 -p "$project_path"/gathered_info/apex_domains/"$apex_dir"/subdomains/"$sub_dir"/{tech_stack,URLs/{waybackURLs,gathered_urls}}
 
                 # Create info files
                 if [[ $is_wildcard -eq 1 ]]; then
@@ -733,7 +753,7 @@ function parse_args(){
 
         # Set add_scope flag - FIX: check if as is set (not empty string)
         typeset -g add_scope=0
-        if [[ -n "${opts[-as]:-${opts[--add-scope]}}" ]]; then
+        if [[ ${#as} -gt 0 ]]; then
             add_scope=1
             # If adding scope but no scope provided, show error
             if [[ ${#scope_inputs[@]} -eq 0 ]]; then
