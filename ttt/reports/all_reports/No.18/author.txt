@@ -1,0 +1,6 @@
+Report author:
+PenTester:
+CVSS_vector:
+CVSS_score:
+OWASP_Rating_Vector:
+OWASP_Rating_score:

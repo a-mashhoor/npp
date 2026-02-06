@@ -22,6 +22,7 @@
 #
 
 setopt extendedglob
+#set -x
 set -e
 
 function main(){
@@ -49,9 +50,9 @@ function creation(){
 	mkdir="${${mkdir## #}%% #}"
 	touch="${${touch## #}%% #}"
 	tree="${${tree## #}%% #}"
-
+  [[ -f $p ]] && colorful "err: a file with the same name: '$pname' already exists in the current/target dir\n" R >&2 && exit 1
 	[[ -d $p ]] && colorful "err: directory with the same name: '$pname' already exists in the target dir\n" R >&2 && exit 1
-
+  $mkdir -m 700 "$p"
 	$mkdir -m 700 -p "$p"/{burp_project,target_data,reports,my_evaluation,gathered_info,"$pname"_obsidian_valut,tmp_exploits/{custom_src,payloads,bin,files2u}}
   $mkdir -m 700 -p "$p"/evidences/{0-vuln_evidences,2-payment_evidences,1-functionalP_evidences}
   $mkdir -m 700 -p "$p"/gathered_info/access_levels/{admins/{full_admin,other_admin_levels},users/{unauth,authed}}
@@ -76,28 +77,91 @@ function creation(){
 	fi
 }
 
+
+
+
 function build_path(){
-	realpath=$(which realpath)
-	realpath="${${realpath## #}%% #}"
+    local name=$1
+    local apath=$2
+    local path
 
-	local name=$1
-	local apath=$2
-	local path
+    # Check if project name contains slashes (problematic)
+    if [[ "$name" =~ "/" ]]; then
+        colorful "err: Project name contains '/' which is problematic\n\n" R >&2
+        return 1
+    fi
 
-	if [[ -n $apath ]]; then
-		apath=$($realpath "$apath")
-		[[ -d $apath ]] && [[ ! $aptah =~ "^/*" ]] &&
-			colorful "err: ABS path is not starting with '/' thus it's incorrect\n\n" R >&2 && return false
+    if [[ -n $apath ]]; then
+        # Handle absolute path case
+        if [[ ! -d "$apath" ]]; then
+            colorful "err: The provided path does not exist or is not a directory\n\n" R >&2
+            return 1
+        fi
 
-		path=$($realpath "${apath}/${name}")
-		[[ -n $path ]] && echo $path && return ||
-			colorful "err: It's likley you have entered incorrect abspath name\n\n" R >&2 && return false
-	else
-		path=$($realpath "./${name}")
-		[[ -n $path ]] && echo $path && return ||
-			colorful "err: You specified '/' in the name this is problematic\n\n" R >&2 && return false
-	fi
+        # Get absolute path using portable methods
+        if command -v realpath >/dev/null 2>&1; then
+            # Try different realpath options for existing directory
+            apath=$(realpath "$apath" 2>/dev/null || echo "")
+        fi
+
+        # If realpath failed or doesn't exist, use a portable method
+        if [[ -z "$apath" ]] || [[ ! "$apath" =~ "^/" ]]; then
+            # Portable method to get absolute path without changing directory
+            if [[ "$apath" = /* ]]; then
+                # Already absolute path
+                apath="$apath"
+            else
+                # Relative path - combine with current directory
+                local current_dir
+                current_dir=$(pwd -P)
+                apath="${current_dir}/${apath}"
+
+                # Normalize the path (remove .., ., etc.)
+                # Use a zsh built-in: :a modifier (available in zsh)
+                # But first ensure the path exists
+                if [[ -d "$apath" ]]; then
+                    apath="${apath:P}"  # :P gives absolute path like realpath
+                fi
+            fi
+        fi
+
+        path="${apath}/${name}"
+        echo "$path"
+        return 0
+
+    else
+        # No path specified - use current directory
+        local current_dir
+        current_dir=$(pwd -P)
+        path="${current_dir}/${name}"
+        echo "$path"
+        return 0
+    fi
 }
+
+
+# function build_path(){
+# 	realpath=$(which realpath)
+# 	realpath="${${realpath## #}%% #}"
+#
+# 	local name=$1
+# 	local apath=$2
+# 	local path
+#
+# 	if [[ -n $apath ]]; then
+# 		apath=$($realpath -m "$apath")
+# 		[[ -d $apath ]] && [[ ! $aptah =~ "^/*" ]] &&
+# 			colorful "err: ABS path is not starting with '/' thus it's incorrect\n\n" R >&2 && return false
+#
+# 		path=$($realpath "${apath}/${name}")
+# 		[[ -n $path ]] && echo $path && return ||
+# 			colorful "err: It's likley you have entered incorrect abspath name\n\n" R >&2 && return false
+# 	else
+# 		path=$($realpath "./${name}")
+# 		[[ -n $path ]] && echo $path && return ||
+# 			colorful "err: You specified '/' in the name this is problematic\n\n" R >&2 && return false
+# 	fi
+# }
 
 
 function usage(){
