@@ -22,7 +22,6 @@
 #
 
 setopt extendedglob
-#set -x
 set -e
 
 function main(){
@@ -50,8 +49,10 @@ function creation(){
 	mkdir="${${mkdir## #}%% #}"
 	touch="${${touch## #}%% #}"
 	tree="${${tree## #}%% #}"
+
   [[ -f $p ]] && colorful "err: a file with the same name: '$pname' already exists in the current/target dir\n" R >&2 && exit 1
 	[[ -d $p ]] && colorful "err: directory with the same name: '$pname' already exists in the target dir\n" R >&2 && exit 1
+
   $mkdir -m 700 "$p"
 	$mkdir -m 700 -p "$p"/{burp_project,target_data,reports,my_evaluation,gathered_info,"$pname"_obsidian_valut,tmp_exploits/{custom_src,payloads,bin,files2u}}
   $mkdir -m 700 -p "$p"/evidences/{0-vuln_evidences,2-payment_evidences,1-functionalP_evidences}
@@ -66,102 +67,80 @@ function creation(){
 	$touch "$p"/target_data/{users,general_description}.txt
 	$touch "$p"/"$pname"_obsidian_valut/"$pname"/{users,general_description,observations,tmp}.md
 
-	echo -en "Report author:\nPenTester:\nCVSS_vector:\n" > "$p"/reports/all_reports/No.{01.."$report_count"}/author.txt
-  echo -en "CVSS_score:\nOWASP_Rating_Vector:\nOWASP_Rating_score:\n" >> "$p"/reports/all_reports/No.{01.."$report_count"}/author.txt
+  {
+    print -n -- "Report author:\nPenTester:\nCVSS_vector:\n"
+    print -n -- "CVSS_score:\nOWASP_Rating_Vector:\nOWASP_Rating_score:\n"
+  } > "$p"/reports/all_reports/No.{01.."$report_count"}/author.txt
 
 	if [[ $tr -eq 0 ]]; then
 		colorful "Project directory is created with below tree structure:\n\n" G >&1
-		$tree --noreport "$p"
+    if [[ -n $tree ]];then
+		  $tree --noreport "$p" -L 2
+    else
+      colorful "note: 'tree' is not installed; skipping tree output.\n" Y >&1
+      command find "$p" -maxdepth 2 -print 2>/dev/null || true
+    fi
 	else
 		colorful "Project directory is created!\n" G >&1
 	fi
 }
 
+function build_path() {
 
+  realpath=$(which realpath)
+  realpath="${${realpath## #}%% #}"
+  uname=$(which uname)
+  uname="${${uname## $}%% #}"
 
+  local name=$1
+  local apath=$2
+  local path
 
-function build_path(){
-    local name=$1
-    local apath=$2
-    local path
-
-    # Check if project name contains slashes (problematic)
-    if [[ "$name" =~ "/" ]]; then
-        colorful "err: Project name contains '/' which is problematic\n\n" R >&2
-        return 1
-    fi
-
+  if [[ "$($uname)" == "Darwin" ]] || command -v sw_vers >/dev/null 2>&1; then
     if [[ -n $apath ]]; then
-        # Handle absolute path case
-        if [[ ! -d "$apath" ]]; then
-            colorful "err: The provided path does not exist or is not a directory\n\n" R >&2
-            return 1
-        fi
-
-        # Get absolute path using portable methods
-        if command -v realpath >/dev/null 2>&1; then
-            # Try different realpath options for existing directory
-            apath=$(realpath "$apath" 2>/dev/null || echo "")
-        fi
-
-        # If realpath failed or doesn't exist, use a portable method
-        if [[ -z "$apath" ]] || [[ ! "$apath" =~ "^/" ]]; then
-            # Portable method to get absolute path without changing directory
-            if [[ "$apath" = /* ]]; then
-                # Already absolute path
-                apath="$apath"
-            else
-                # Relative path - combine with current directory
-                local current_dir
-                current_dir=$(pwd -P)
-                apath="${current_dir}/${apath}"
-
-                # Normalize the path (remove .., ., etc.)
-                # Use a zsh built-in: :a modifier (available in zsh)
-                # But first ensure the path exists
-                if [[ -d "$apath" ]]; then
-                    apath="${apath:P}"  # :P gives absolute path like realpath
-                fi
-            fi
-        fi
-
-        path="${apath}/${name}"
-        echo "$path"
-        return 0
-
+    base=$(cd "$apath" && pwd -P) || return 1
     else
-        # No path specified - use current directory
-        local current_dir
-        current_dir=$(pwd -P)
-        path="${current_dir}/${name}"
-        echo "$path"
-        return 0
+      base=$PWD
     fi
+    print -r -- "${base%/}/$name"
+  fi
+
+  if [[ "$name" =~ "/" ]]; then
+      colorful "err: Project name contains '/' which is problematic\n\n" R >&2
+      return 1
+  fi
+
+  if [[ -n $apath ]]; then
+    if [[ ! -d "$apath" ]]; then
+      colorful "err: The provided path does not exist or is not a directory\n\n" R >&2
+      return 1
+    fi
+
+    if command -v $realpath >/dev/null 2>&1; then
+      if $realpath --help 2>/dev/null | grep -q -- "--canonicalize-missing"; then
+        apath=$($realpath --canonicalize-missing "$apath" 2>/dev/null)
+      elif $realpath --help 2>/dev/null | grep -q -- "-m"; then
+        apath=$($realpath -m "$apath" 2>/dev/null)
+      else
+        apath=$($realpath "$apath" 2>/dev/null)
+      fi
+    fi
+
+    if [[ -z "$apath" ]] || [[ ! "$apath" =~ "^/" ]]; then
+      apath="${apath:A}"
+    fi
+
+    path="${apath}/${name}"
+    echo "$path"
+    return 0
+
+  else
+    local current_dir="${PWD:A}"
+    path="${current_dir}/${name}"
+    echo "$path"
+    return 0
+  fi
 }
-
-
-# function build_path(){
-# 	realpath=$(which realpath)
-# 	realpath="${${realpath## #}%% #}"
-#
-# 	local name=$1
-# 	local apath=$2
-# 	local path
-#
-# 	if [[ -n $apath ]]; then
-# 		apath=$($realpath -m "$apath")
-# 		[[ -d $apath ]] && [[ ! $aptah =~ "^/*" ]] &&
-# 			colorful "err: ABS path is not starting with '/' thus it's incorrect\n\n" R >&2 && return false
-#
-# 		path=$($realpath "${apath}/${name}")
-# 		[[ -n $path ]] && echo $path && return ||
-# 			colorful "err: It's likley you have entered incorrect abspath name\n\n" R >&2 && return false
-# 	else
-# 		path=$($realpath "./${name}")
-# 		[[ -n $path ]] && echo $path && return ||
-# 			colorful "err: You specified '/' in the name this is problematic\n\n" R >&2 && return false
-# 	fi
-# }
 
 
 function usage(){
@@ -218,9 +197,20 @@ function parse_args(){
 		[[ -z $pname ]] && colorful "err: no project name provided exiting\nprinting help\n\n" R >&2 && usage && exit 3
 	fi
 
+  if [[ "$pname" == */* ]]; then
+    colorful "err: project name must not contain '/'\n" R >&2
+    exit 2
+  fi
+
+
 	typeset -g abs_path
 	if (( ${+opts[-p]} )) || (( ${+opts[--path]} )); then
 		abs_path=${opts[-p]:-${opts[--path]}}
+    if [[ "$abs_path" != /* ]]; then
+      colorful "err: The provided path must be absolute (start with '/')\n\n" R >&2
+      usage
+      exit 1
+    fi
 		if [[ ! -d "$abs_path" ]]; then
 			colorful "err: The provided absolute path does not exits\npriting help\n\n" R >&2 && usage && exit 1
 		fi
