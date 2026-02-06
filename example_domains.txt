@@ -1,0 +1,16 @@
+        https://www.example.com/path/to/page?query=1
+	http://sub.example.com:8080
+	api.test.example.co.uk
+	*.example.com
+	mail.google.com
+	drive.google.com
+	*.prod.google.com
+	example.com
+	https://blog.sub.example.org/articles/123
+	test.*.example.com
+        invalid domain
+        ftp://files.server.example.net:21
+	*.co.uk
+        test.example.co.uk
+	dev.test.example.co.uk
+	*.example.co.uk
