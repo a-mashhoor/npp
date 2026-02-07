@@ -454,8 +454,8 @@ function creation(){
     $mkdir -m 700 "$p"
     $mkdir -m 700 -p "$p"/{burp_project,target_data,reports,my_evaluation,gathered_info,"$pname"_obsidian_valut,tmp_exploits/{custom_src,payloads,bin,files2u}}
     $mkdir -m 700 -p "$p"/evidences/{0-vuln_evidences,2-payment_evidences,1-functionalP_evidences}
-    $mkdir -m 700 -p "$p"/gathered_info/access_levels/{admins/{full_admin,other_admin_levels},users/{unauth,authed}}
-    $mkdir -m 700 -p "$p"/gathered_info/{crawlers_results/katana_r,dns_results,fuzzing_results/{ffuf_r,ferox_r}}
+    $mkdir -m 700 -p "$p"/gathered_info/RBAC/{admins/{full_admin,other_admin_levels},users/{unauth,authed}}
+    $mkdir -m 700 -p "$p"/gathered_info/{screen_shots,crawlers_results/katana_r,dns_results,fuzzing_results/{ffuf_r,ferox_r}}
 
     # Handle apex domains based on scope or create sample
     if [[ ${#scope_inputs[@]} -gt 0 ]]; then
