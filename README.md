@@ -1,186 +1,236 @@
 # 🔥 NPP: NEW PENTEST PROJECT
-### *Because organizing your chaos shouldn't be harder than pwning the box*
+### *Stop wasting time on folder structures, start pwning boxes*
 
 ---
 
-## 📌 WHAT THE FUCK IS THIS?
+## 📌 WHAT THE F IS THIS?
 
-Another pentest tool? No. This is **your ADHD brain's personal assistant** that stops you from creating 47 fucking folders every time you start a new engagement.
+`npp` (new pentest project) is your **personal project manager** that automates the boring shit you always do at the start of an engagement. No more manually creating 47 folders, no more losing notes in random directories, no more "where did I save that screenshot?"
 
-`nnp` (new pentest project) is a **zsh script** that automagically creates that beautiful, organized directory structure you always plan to make but never actually do when the client's breathing down your neck.
-
----
-
-## 🎯 FEATURES THAT DON'T SUCK
-
-### ✅ **AUTO-SCOPE PROCESSING**
-Give it domains, URLs, wildcards, or even a file - it'll:
-- Extract FQDNs like a boss
-- Identify apex domains automatically
-- Create structured dirs for each domain/subdomain
-- Handle wildcards (`*.target.com`) properly
-- Validate domains (because you keep typing `gogle.com`)
-
-### 📁 **SANE DIRECTORY STRUCTURE**
-No more `~/projects/client/untitled_folder/real_folder/final_final/`
-Creates:
-- `reports/` (with numbered versions, you animal)
-- `gathered_info/` (organized by apex domains → subdomains)
-- `evidences/` (categorized because screen chaos is unprofessional)
-- `tmp_exploits/` (where your 0-days live)
-- Obsidian vault (for the note-taking hipsters)
-
-### 🔄 **PROJECT UPDATES**
-Already have a project? Need 10 more report folders? New scope?
-`nnp -up /path/project -ar 10 -as` - **BOOM**. Done.
+It handles:
+- **Project metadata** (client, type, rules of engagement, bounty platforms, etc.)
+- **Directory structure** (organized by apex domains, subdomains, reports, evidences)
+- **Scope processing** (domains, URLs, wildcards – from file or stdin)
+- **DNS resolution** (basic A record checks with retries, custom resolvers)
+- **JSON databases** (global project index + per‑project detailed data)
+- **Updates** (add scope, reports, notes, users)
+- **Status tracking** (project state, domain/subdomain alive/working/inscope)
+- **Listing** (filtered by alive/inscope, show stats, current work)
+- **Archiving** (tar, tar.gz, tar.bz2, 7z, zip, rar – with password support)
+- **Removal** (project, apex, subdomain, user – with confirmation)
+- **Trilium integration** (create notes in your favourite note‑taking app)
+- **Config file support** (for those who hate typing)
 
 ---
 
 ## 🚀 INSTALLATION (IT'S NOT ROCKET SCIENCE)
 
 ```bash
-# 1. Clone this shit
-git clone https://github.com/yourusername/nnp.git
-cd nnp
+# Clone the repo
+git clone https://github.com/yourusername/npp.git
+cd npp/src
 
-# 2. Make it executable (duh)
-chmod +x nnp
+# Make it executable
+chmod +x npp.zsh
 
-# 3. Move it somewhere in your PATH, you lazy bastard
-sudo mv nnp /usr/local/bin/  # or ~/.local/bin/ if you're a normie
+# Move it to your PATH (pick one)
+sudo ln -sf  `pwd`/npp.zsh /usr/local/bin/npp      # system-wide
+ln -sf  `pwd`/npp.zsh  $HOME/.local/bin/npp              # user only (add to PATH if needed)
 ```
 
-**OR** if you're feeling extra:
-
-```bash
-curl -sSL https://raw.githubusercontent.com/yourusername/nnp/main/nnp -o /usr/local/bin/nnp && chmod +x /usr/local/bin/nnp
-```
 
 ---
 
 ## 💀 USAGE: STOP WASTING TIME
 
-### **Basic Bitch Mode** (You have 5 minutes before the call)
+### **Initialize a new project**
 ```bash
-nnp -n "acme_corp"  # Creates project with default structure
+npp init -n myproject -t bounty -bp "hacker1:https://hackerone.com/foo" -d "Critical API testing" --note t --trilium-server http://localhost:8080 --trilium-api-key your-key
+```
+This only creates a **global entry** (no directories yet). The real structure comes later with `new`.
+
+### **Create directories for an existing project**
+```bash
+npp new -p myproject -s @scope.txt -rc 30 -t
+```
+- `-p` project name (must already exist)
+- `-s` scope (file with `@` prefix, or space‑separated list)
+- `-rc` number of report folders (default 20)
+- `-t` show directory tree
+
+### **Add more stuff to an existing project**
+```bash
+npp add -p myproject -as -s newdomain.com -dr --resolver 8.8.8.8
+npp add -p myproject -ar 5
+npp add -p myproject -an "quick_notes"
+npp add -p myproject -au admin:password123
 ```
 
-### **Pro Hacker Mode** (You actually read the scope)
+### **Update status**
 ```bash
-nnp -n "acme_corp" -rc 30 -s @scope.txt -t
-```
-- `-rc 30`: Creates 30 report folders (because QA will reject it 29 times)
-- `-s @scope.txt`: Processes domains from file
-- `-t`: Shows tree because you like pretty things
-
-### **Scope Input Formats** (We're flexible)
-```bash
-# Direct input
-nnp -n test -s "example.com" "*.test.com" "https://api.target.com"
-
-# From file
-nnp -n test -s @domains.txt
-
-# From stdin (pipe that shit)
-echo -e "target.com\n*.api.target.com" | nnp -n test -s @-
+npp update -p myproject --status completed
+npp update -p myproject -ux example.com --alive false --workingon true
+npp update -p myproject -us sub.example.com --auto-alive -dr
 ```
 
-### **Update Mode** (When you realize you fucked up)
+### **List stuff**
 ```bash
-# Add 5 more report directories (because your manager said "just one more")
-nnp -up /path/to/project -ar 5
+npp list -P                               # all project names
+npp list -p myproject -a                  # all domains & subdomains
+npp list -p myproject -ax                 # only apex domains
+npp list -p myproject -sd                 # only subdomains
+npp list -p myproject -cs                 # statistics
+npp list -p myproject -c                  # currently working on
+npp list -p myproject -a -f alive         # only alive entries
+```
 
-# Add new scope to existing project
-nnp -dn existing_project -as -s "new.target.com" "*.api.new.com"
+### **Change to project directory (prints path)**
+```bash
+cd $(npp cd -p myproject)
+```
+
+### **Archive a project**
+```bash
+npp archive -p myproject -f 7z -s         # password‑protected 7z
+npp archive -p myproject -f tar.bz2       # good ol' tarball
+```
+
+### **Remove stuff (with confirmation)**
+```bash
+npp rm -p myproject                        # delete entire project
+npp rm -p myproject -ax example.com        # remove apex + all subs
+npp rm -p myproject -su sub.example.com    # remove single subdomain
+npp rm -p myproject -u admin:password123   # remove user line
+npp rm -p myproject -y                     # skip confirmation
 ```
 
 ---
 
-## 🏗️ DIRECTORY STRUCTURE (WHAT YOU GET)
+## 📁 DIRECTORY STRUCTURE (WHAT YOU GET)
 
 ```
-acme_corp/
-├── burp_project/          # Your Burp garbage
-├── target_data/           # Client info (if they bothered to send it)
+myproject/
+├── burp_project/               # Burp session files
+├── target_data/
+│   ├── scope/                   # original scope files
+│   ├── credentials/             # users.txt (passwords optional)
+│   ├── api_documents/           # API docs from client
+│   └── general_data/            # general description, etc.
 ├── reports/
-│   ├── all_reports/
-│   │   ├── No.01/        # First attempt (will be wrong)
-│   │   ├── No.02/        # Second attempt (still wrong)
-│   │   └── ...           # Up to 20 (or however many you specify)
-│   └── templates/        # Templates you'll never use
+│   ├── templates/                # report templates (you'll never use them)
+│   └── all_reports/
+│       ├── No.01/                 # first attempt
+│       │   ├── evidences/
+│       │   ├── edited_media/
+│       │   └── ...
+│       ├── No.02/                 # second attempt
+│       └── ...
+├── my_evaluation/                 # your personal notes
 ├── gathered_info/
+│   ├── network/                    # ASNs, CIDRs, CDN, whois
+│   ├── screen_shots/                # pictures of your pwns
+│   ├── crawlers_results/             # katana, etc.
+│   ├── dns_results/                   # raw DNS output
+│   ├── fuzzing_results/                # ffuf, feroxbuster
+│   ├── RBAC/                           # role‑based access control stuff
 │   └── apex_domains/
-│       └── target-com/   # Apex domain dir
+│       └── example-com/                 # apex domain dir
 │           ├── apex_domain.txt
 │           └── subdomains/
-│               ├── api-target-com/
-│               ├── www-target-com/
-│               └── wildcard-subdomain/
-│                   ├── subdomain.txt
-│                   └── wildcard.txt  # Because you'll forget
-├── evidences/            # Screenshots of you pwning stuff
-├── tmp_exploits/         # Your 0-days and sketchy scripts
-└── acme_corp_obsidian_vault/  # For the organized psychopaths
+│               ├── www-example-com/
+│               │   ├── subdomain.txt
+│               │   ├── tech_stack/       # technologies.json
+│               │   └── URLs/              # wayback/gathered URLs
+│               └── api-example-com/
+├── tmp_exploits/                    # your 0‑days (keep them safe)
+│   ├── custom_src/
+│   ├── payloads/
+│   ├── bin/
+│   └── files2u/
+├── myproject_local_notes/            # local markdown notes (if --note l)
+│   ├── observations.md
+│   └── tmp.md
+└── .local.data.json                  # per‑project JSON (don't touch if you do you will f up the tool)
 ```
 
 ---
 
 ## ⚙️ OPTIONS (READ THE FINE PRINT)
 
-| Flag | What it does | Why you care |
-|------|-------------|--------------|
-| `-n, --name` | Project name | Don't use spaces or slurs, dumbass |
-| `-p, --path` | Where to create it | Default: current dir (wherever you ran it from) |
-| `-rc, --report-count` | How many report folders | Default: 20 (optimistic, I know) |
-| `-s, --scope` | Domains/URLs to process | Files need `@` prefix, e.g., `@scope.txt` |
-| `-t, --tree` | Show directory tree | For that warm fuzzy feeling |
-| `-up, --update-project` | Update existing project | Path to project dir |
-| `-dn, --directory-name` | Update by name | Current directory assumed |
-| `-ar, --add-reports` | Add more report folders | Because you ran out |
-| `-as, --add-scope` | Add new domains | For when scope creeps |
+### Global
+| Option | Description |
+|--------|-------------|
+| `-h, --help` | Show this help |
+| `--version` | Show version |
+| `--check-config FILE` | Validate a config file |
+
+### Commands
+| Command | Description |
+|---------|-------------|
+| `init`  | Initialize project (metadata only) |
+| `new`   | Create directory structure |
+| `add`   | Add scope/reports/notes/users |
+| `update`| Update status (project/apex/subdomain) |
+| `rm`    | Remove project/apex/subdomain/user |
+| `list`  | List projects/domains/subdomains |
+| `cd`    | Print project path |
+| `archive` | Archive project |
+
+Run `npp <command> --help` for command‑specific options.
 
 ---
 
-## 🧠 PRO TIPS (FROM SOMEONE WHO'S BEEN THERE)
+## 🧠 PRO TIPS
 
-1. **Use scope files** - Stop typing domains manually like a caveman
-2. **Wildcards matter** - `*.internal.target.com` creates proper wildcard structure
-3. **Update, don't recreate** - Use `-up` when scope expands (it always does)
-4. **Tree flag is your friend** - Verify the structure before you start
-5. **Obsidian integration** - Actually use it for notes, you'll thank yourself later
+- **Use config files** for repetitive options. Example `~/.npprc`:
+  ```
+  type=bounty
+  note=t
+  trilium-server=http://localhost:8080
+  trilium-api-key=your-key
+  trilium-parent=team-projects
+  ```
+  Then: `npp init -n myproject -c ~/.npprc`
+
+- **DNS resolution** with `-dr` is reliable (5 retries). Use `--resolver` to specify a custom DNS server.
+- **Auto‑alive** in `update` re‑resolves the domain and updates `is_alive` and IPs.
+- **Wildcard domains** (`*.example.com`) are handled properly: directory `wildcard-subdomain`, files indicate wildcard.
+- **Trilium** integration creates a book note for the project and child notes `notes_tmp` and `observations`. Make sure the parent note exists.
+- **Global JSON** lives in `~/.local/share/npp/global.json`. Back it up if you care.
 
 ---
 
 ## 🔮 ROADMAP (COMING SOON™)
 
-- [ ] **GPG encryption** for sensitive reports (because opsec)
-- [ ] **Project backup/restore** (for when you `rm -rf` the wrong thing)
-- [ ] **Template customization** (make it your own)
-- [ ] **Integration with recon tools** (automate that boring shit)
-- [ ] **More color options** (because rainbow terminal is life)
+- [ ] **GPG encryption** for sensitive reports
+- [ ] **Backup/restore** projects (export/import)
+- [ ] **More recon integrations** (subfinder, httpx, nuclei)
+- [ ] **Template system** for custom directory layouts
+- [ ] **Web UI** (maybe, if I get bored)
 
 ---
 
-## 🚨 WARNINGS (READ THIS, IDIOT)
+## 🚨 WARNINGS (READ THIS, ID\*\*T)
 
-1. **ZSH ONLY** - This ain't bash-compatible. Get with the times.
-2. **No spaces in project names** - We're not savages.
-3. **Validate your scope** - Garbage in, garbage out.
-4. **Backup your shit** - I'm not responsible for your `rm -rf` accidents.
+1. **ZSH ONLY** – This script uses zsh‑isms. Don't try with bash.
+2. **No spaces in project names** – `npp init -n "my project"` will break. Use underscores or hyphens.
+3. **Always validate your scope** – `process_scope` does its best, but garbage in = garbage out.
+4. **Backup your global JSON** – It's the brain of the tool. Lose it, lose your project index.
+5. **`rm` is destructive** – Confirmation is there for a reason. Don't `-y` unless you're sure.
 
 ---
 
 ## 👨‍💻 AUTHOR
 
-**Arshia Mashhoor** - The guy who got tired of manually creating directories at 3 AM.
+**Arshia Mashhoor** – *"I made this because I kept losing my screenshots."*
 
-*"I made this because I kept forgetting where I saved my fucking screenshots."*
+GitHub: [@a-mashhoor](https://github.com/a-mashhoor)
 
 ---
 
 ## 📄 LICENSE
 
-**WTFPL** - Do whatever the fuck you want with it. Just don't blame me when it breaks.
+**WTFPL** – Do whatever the f..k you want with it. No warranties, no liabilities, just code.
 
 ---
 
@@ -190,11 +240,12 @@ Stop being a disorganized mess. Use this tool. Save your time for actual hacking
 
 ```bash
 # This is the way
-nnp -n "$(whoami)_is_not_a_moron" -rc 50 -s @all_the_things.txt -t
+npp init -n "$(whoami)_is_organized" -t bounty -bp "hacker1:https://hackerone.com/foo"
+npp new -p "$(whoami)_is_organized" -s @scope.txt -rc 30 -t
 ```
 
 **Happy hacking, you beautiful chaotic bastard.** 🏴‍☠️
 
 ---
 
-*Found a bug? Feature request? Open an issue or fix it yourself and submit a PR. Don't be lazy.*
+*Found a bug? Open an issue. Want a feature? Submit a PR. Don't just complain.*
