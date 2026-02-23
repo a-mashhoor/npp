@@ -27,15 +27,14 @@ It handles:
 
 ```bash
 # Clone the repo
-git clone https://github.com/yourusername/npp.git
-cd npp/src
+git clone https://github.com/a-mashhoor/npp.git npp && cd npp/src
 
 # Make it executable
 chmod +x npp.zsh
 
 # Move it to your PATH (pick one)
-sudo ln -sf  `pwd`/npp.zsh /usr/local/bin/npp      # system-wide
-ln -sf  `pwd`/npp.zsh  $HOME/.local/bin/npp              # user only (add to PATH if needed)
+sudo ln -sf  `pwd`/npp.zsh /usr/local/bin/npp           # system-wide
+ln -sf  `pwd`/npp.zsh  $HOME/.local/bin/npp             # user only (add to PATH if needed)
 ```
 
 
